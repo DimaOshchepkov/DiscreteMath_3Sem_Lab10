@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <list>
+#include <stack>
 
 enum View
 {
@@ -11,76 +12,126 @@ enum View
 	cross,
 };
 
-int EdgeClass(int x, int y, const std::vector<int>& parent,
-	const std::vector<bool>& visited, const std::vector<bool>& open,
-	const std::vector<int>& entryTime)
+namespace sup
 {
-	if (parent[y] == x) return View::tree;
-	else if (visited[y] && !open[y]) return View::back;
-	else if (open[y] && entryTime[y] > entryTime[x]) return View::forward;
-	else if (open[y] && entryTime[y] < entryTime[x]) return View::cross;
+	std::vector<bool> discovered;
+	std::vector<bool> processed;
+	std::vector<int> parent;
+	std::vector<int> entryTime;
+	std::vector<int> low;
+	std::vector<int> scc;
+	std::list<int> ans;
+	std::stack<int> stack;
+	int time = 0;
+	int componentCount = 0;
+};
+
+int EdgeClass(int x, int y)
+{
+	if (sup::parent[y] == x)
+		return View::tree;
+	else if (sup::discovered[y] && !sup::processed[y])
+		return View::back;
+	else if (sup::processed[y] && sup::entryTime[y] > sup::entryTime[x])
+		return View::forward;
+	else if (sup::processed[y] && sup::entryTime[y] < sup::entryTime[x])
+		return View::cross;
 
 	return -1;
 }
 
-void ProcessedEdge(int x, int y, std::vector<int>& low, std::vector<int>& scc,
-	const std::vector<int>& entryTime, const std::vector<int>& parent,
-	const std::vector<bool>& visited, const std::vector <bool> & open)
+void ProcessEdge(int x, int y)
 {
-	int edgeClass = EdgeClass(x, y, parent, visited, open, entryTime);
+	int edgeClass = EdgeClass(x, y);
 	if (edgeClass == View::back)
-		if (entryTime[y] < entryTime[low[x]])
-			low[x] = y;
+		if (sup::entryTime[y] < sup::entryTime[sup::low[x]])
+			sup::low[x] = y;
 
 	if (edgeClass == View::cross)
-		if (scc[y] == -1 && entryTime[y] < entryTime[low[x]])
-			low[x] = y;
+		if (sup::scc[y] == -1 && sup::entryTime[y] < sup::entryTime[sup::low[x]])
+			sup::low[x] = y;
 }
 
-void _DFS(const std::vector<std::list<int>>& graph, std::vector<bool>& open, std::vector<bool>& visited, std::vector<int>& parent,
-	int top, std::vector<int> entryTime, int time,
-	std::vector<int>& low, std::vector<int>& scc)
+void ProcessTopEarly(int v)
 {
-	open[top] = true;
-	entryTime[top] = time;
-	time++;
+	sup::stack.push(v);
+}
+
+void ProcessTopLate(int v)
+{
+	if (sup::low[v] == v)
+	{
+		int t;
+		sup::componentCount++;
+		sup::scc[v] = sup::componentCount;
+		while ((t = sup::stack.top()) != v)
+		{
+			sup::stack.pop();
+			sup::scc[t] = sup::componentCount;
+		}
+		if (!sup::stack.empty())
+			sup::stack.top();
+	}
+	if (sup::parent[v] > 0)
+		if (sup::entryTime[sup::low[v]] <
+			sup::entryTime[sup::low[sup::parent[v]]]) {
+
+			sup::low[sup::parent[v]] = sup::low[v];
+		}
+
+}
+
+void StrongComponents(const std::vector<std::list<int>>& graph)
+{
+	for (int i = 0; i < graph.size(); i++)
+	{
+		sup::low[i] = i;
+		sup::scc[i] = -1;
+	}
+
+	sup::componentCount = 0;
+
+}
+
+void _DFS(const std::vector<std::list<int>>& graph, int top)
+{
+	sup::discovered[top] = true;
+
+	//
+
+	sup::entryTime[top] = sup::time;
+	sup::time++;
 	for (int t : graph[top])
 	{
-		if (!open[t])
+		//
+		if (!sup::discovered[t])
 		{
-			parent[t] = top;
-
-			_DFS(graph, open, visited, parent, t, entryTime, time);
-		}
-		else
-		{
-
+			sup::parent[t] = top;
+			_DFS(graph, t);
 		}
 	}
-	if (low[top] == top)
-
-	visited[top] = true;
+	sup::processed[top] = true;
+	sup::time++;
 }
 
 
 
 std::list<int> DFS(const std::vector<std::list<int>>& graph, int countEdge)
 {
-	std::vector<bool> visited(graph.size(), false);
-	std::vector<bool> open(graph.size(), false);
-	std::vector<int> parent(graph.size(), -1);
-	std::vector<int> time(graph.size(), 0);
-	std::vector<int> low(countEdge);
-	std::vector<int> scc(countEdge);
-	std::list<int> ans;
+	sup::discovered.resize(graph.size(), false);
+	sup::processed.resize(graph.size(), false);
+	sup::parent.resize(graph.size(), -1);
+	sup::entryTime.resize(graph.size(), 0);
+	sup::low.resize(countEdge);
+	sup::scc.resize(countEdge);
 
 	for (int i = 0; i < graph.size(); i++)
 	{
-		_DFS(graph, open, visited, parent, i, time, 0, low, scc);
-		if (ans.size() != 0)
-			return ans;
-		open.assign(open.size(), false);
-		visited.assign(visited.size(), false);
+		_DFS(graph, 0);
+		if (sup::ans.empty())
+			return sup::ans;
+		sup::processed.assign(sup::processed.size(), false);
+		sup::discovered.assign(sup::discovered.size(), false);
 	}
-	return ans;
+	return sup::ans;
 }

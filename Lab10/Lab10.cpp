@@ -3,9 +3,23 @@
 
 #include <iostream>
 
+#include "Header.h"
+
+std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec)
+{
+    for (auto x : vec)
+        os << x << ' ';
+    return os << '\n';
+}
+
 int main()
 {
-    std::cout << "Hello World!\n";
+    const std::string path = "graph.txt";
+
+    //InputGraph(path);
+    
+    std::vector<std::list<int>> graph = ReadGraph(path);
+    std::cout << DFS(graph);
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"

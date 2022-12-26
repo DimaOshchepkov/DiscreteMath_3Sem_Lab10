@@ -5,8 +5,9 @@
 #include <stack>
 #include <algorithm>
 
+class Sup;
 
-int EdgeClass(int x, int y);
+int EdgeClass(int x, int y, Sup& sup);
 
 std::vector<int> DFS(const std::vector<std::list<int>>& graph);
 

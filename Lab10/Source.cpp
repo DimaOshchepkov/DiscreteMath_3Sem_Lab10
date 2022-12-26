@@ -26,108 +26,154 @@ namespace sup
 	int componentCount = 0;
 };
 
-int EdgeClass(int x, int y)
+class Sup
 {
-	if (sup::parent[y] == x)
+public:
+	std::vector<bool> discovered;
+	std::vector<bool> processed;
+	std::vector<int> parent;
+	std::vector<int> entryTime;
+	std::vector<int> low;
+	std::vector<int> scc;
+	std::stack<int> stack;
+	int time = 0;
+	int componentCount = 0;
+
+	Sup(int graphSize)
+		: discovered(graphSize, false)
+		, processed(graphSize, false)
+		, parent(graphSize, -1)
+		, entryTime(graphSize, -1)
+		, low(graphSize, -1)
+		, scc(graphSize, -1)
+		, stack()
+		, time(0)
+		, componentCount(0) {}
+
+	~Sup()
+	{
+		discovered.clear();
+		processed.clear();
+		parent.clear();
+		entryTime.clear();
+		low.clear();
+		scc.clear();
+
+		discovered.shrink_to_fit();
+		processed.shrink_to_fit();
+		parent.shrink_to_fit();
+		entryTime.shrink_to_fit();
+		low.shrink_to_fit();
+		scc.shrink_to_fit();
+	}
+
+};
+
+int EdgeClass(int x, int y, Sup& sup)
+{
+	if (sup.parent[y] == x)
 		return View::tree;
-	else if (sup::discovered[y] && !sup::processed[y])
+	else if (sup.discovered[y] && !sup.processed[y])
 		return View::back;
-	else if (sup::processed[y] && sup::entryTime[y] > sup::entryTime[x])
+	else if (sup.processed[y] && sup.entryTime[y] > sup.entryTime[x])
 		return View::forward;
-	else if (sup::processed[y] && sup::entryTime[y] < sup::entryTime[x])
+	else if (sup.processed[y] && sup.entryTime[y] < sup.entryTime[x])
 		return View::cross;
 
 	return -1;
 }
 
-void ProcessEdge(int x, int y)
+void ProcessEdge(int x, int y, Sup& sup)
 {
-	int edgeClass = EdgeClass(x, y);
+	int edgeClass = EdgeClass(x, y, sup);
 	if (edgeClass == View::back)
-		if (sup::entryTime[y] < sup::entryTime[sup::low[x]])
-			sup::low[x] = y;
+		if (sup.entryTime[y] < sup.entryTime[sup.low[x]])
+			sup.low[x] = y;
 
 	if (edgeClass == View::cross)
-		if (sup::scc[y] == -1 && sup::entryTime[y] < sup::entryTime[sup::low[x]])
-			sup::low[x] = y;
+		if (sup.scc[y] == -1 && sup.entryTime[y] < sup.entryTime[sup.low[x]])
+			sup.low[x] = y;
 }
 
-void ProcessTopEarly(int v)
+void ProcessTopEarly(int v, Sup& sup)
 {
-	sup::stack.push(v);
+	sup.stack.push(v);
 }
 
-void ProcessTopLate(int v)
+void ProcessTopLate(int v, Sup& sup)
 {
-	if (sup::low[v] == v)
+	if (sup.low[v] == v)
 	{
 		int t;
-		sup::componentCount++;
-		sup::scc[v] = sup::componentCount;
-		while ((t = sup::stack.top()) != v)
+		sup.componentCount++;
+		sup.scc[v] = sup.componentCount;
+		while ((t = sup.stack.top()) != v)
 		{
-			sup::stack.pop();
-			sup::scc[t] = sup::componentCount;
+			sup.stack.pop();
+			sup.scc[t] = sup.componentCount;
 		}
-		if (!sup::stack.empty())
-			sup::stack.pop();
+		if (!sup.stack.empty())
+			sup.stack.pop();
 	}
-	if (sup::parent[v] >= 0)
-		if (sup::entryTime[sup::low[v]] < sup::entryTime[sup::low[sup::parent[v]]]) {
+	if (sup.parent[v] >= 0)
+		if (sup.entryTime[sup.low[v]] < sup.entryTime[sup.low[sup.parent[v]]]) {
 
-			sup::low[sup::parent[v]] = sup::low[v];
+			sup.low[sup.parent[v]] = sup.low[v];
 		}
 
 }
 
 
-void _DFS(const std::vector<std::list<int>>& graph, int top)
+void _DFS(const std::vector<std::list<int>>& graph, int top, Sup& sup)
 {
-	sup::discovered[top] = true;
+	sup.discovered[top] = true;
 
-	ProcessTopEarly(top);
+	ProcessTopEarly(top, sup);
 
-	sup::entryTime[top] = sup::time;
-	sup::time++;
+	sup.entryTime[top] = sup.time;
+	sup.time++;
 	for (int t : graph[top])
 	{
-		if (!sup::discovered[t])
+		if (!sup.discovered[t])
 		{
-			sup::parent[t] = top;
-			_DFS(graph, t);
+			sup.parent[t] = top;
+			_DFS(graph, t, sup);
 		}
-		ProcessEdge(top, t);
+		ProcessEdge(top, t, sup);
 	}
-	ProcessTopLate(top);
-	sup::processed[top] = true;
-	sup::time++;
+	ProcessTopLate(top, sup);
+	sup.processed[top] = true;
+	sup.time++;
 }
 
 
 
 std::vector<int> DFS(const std::vector<std::list<int>>& graph)
 {
+	Sup sup(graph.size());
+	/*
 	sup::discovered.resize(graph.size(), false);
 	sup::processed.resize(graph.size(), false);
 	sup::parent.resize(graph.size(), -1);
 	sup::entryTime.resize(graph.size(), 0);
 	sup::low.resize(graph.size(), -1);
 	sup::scc.resize(graph.size(), -1);
+	*/
 
 	for (int i = 0; i < graph.size(); i++)
 	{
-		sup::low[i] = i;
-		sup::scc[i] = -1;
+		sup.low[i] = i;
+		sup.scc[i] = -1;
 	}
 
-	sup::componentCount = -1;
+	sup.componentCount = -1;
 
 	for (int i = 0; i < graph.size(); i++)
-		if (!sup::discovered[i])
-			_DFS(graph, i);
+		if (!sup.discovered[i])
+			_DFS(graph, i, sup);
 
-	std::vector<int> s = sup::scc;
-
+	std::vector<int> s = sup.scc;
+	/*
 	sup::discovered.clear();
 	sup::processed.clear();
 	sup::parent.clear();
@@ -141,6 +187,7 @@ std::vector<int> DFS(const std::vector<std::list<int>>& graph)
 	sup::entryTime.shrink_to_fit();
 	sup::low.shrink_to_fit();
 	sup::scc.shrink_to_fit();
+	*/
 	return s;
 }
 

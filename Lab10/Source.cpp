@@ -117,7 +117,6 @@ void ProcessTopLate(int v, Sup& sup)
 	}
 	if (sup.parent[v] >= 0)
 		if (sup.entryTime[sup.low[v]] < sup.entryTime[sup.low[sup.parent[v]]]) {
-
 			sup.low[sup.parent[v]] = sup.low[v];
 		}
 
@@ -151,14 +150,6 @@ void _DFS(const std::vector<std::list<int>>& graph, int top, Sup& sup)
 std::vector<int> DFS(const std::vector<std::list<int>>& graph)
 {
 	Sup sup(graph.size());
-	/*
-	sup::discovered.resize(graph.size(), false);
-	sup::processed.resize(graph.size(), false);
-	sup::parent.resize(graph.size(), -1);
-	sup::entryTime.resize(graph.size(), 0);
-	sup::low.resize(graph.size(), -1);
-	sup::scc.resize(graph.size(), -1);
-	*/
 
 	for (int i = 0; i < graph.size(); i++)
 	{
@@ -172,23 +163,7 @@ std::vector<int> DFS(const std::vector<std::list<int>>& graph)
 		if (!sup.discovered[i])
 			_DFS(graph, i, sup);
 
-	std::vector<int> s = sup.scc;
-	/*
-	sup::discovered.clear();
-	sup::processed.clear();
-	sup::parent.clear();
-	sup::entryTime.clear();
-	sup::low.clear();
-	sup::scc.clear();
-
-	sup::discovered.shrink_to_fit();
-	sup::processed.shrink_to_fit();
-	sup::parent.shrink_to_fit();
-	sup::entryTime.shrink_to_fit();
-	sup::low.shrink_to_fit();
-	sup::scc.shrink_to_fit();
-	*/
-	return s;
+	return sup.scc;
 }
 
 void InputGraph(const std::string& path)

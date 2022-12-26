@@ -12,20 +12,6 @@ enum View
 	cross,
 };
 
-namespace sup
-{
-	std::vector<bool> discovered;
-	std::vector<bool> processed;
-	std::vector<int> parent;
-	std::vector<int> entryTime;
-	std::vector<int> low;
-	std::vector<int> scc;
-	std::list<int> ans;
-	std::stack<int> stack;
-	int time = 0;
-	int componentCount = 0;
-};
-
 class Sup
 {
 public:
